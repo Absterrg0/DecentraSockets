@@ -1,0 +1,78 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+
+model User {
+  id                Int       @id @default(autoincrement())
+  name              String
+  email             String    @unique
+  password          String
+  experience        String?
+  skills            String[]
+  bio               String?
+  projectsCreated   Project[] @relation("ClientProjects")
+  applications      Application[]
+  projectsAssigned  Project[] @relation("AssignedApplicant")
+  walletAddressSOL  String    @default("")
+  walletAddressETH  String    @default("")
+  sentMessages      Message[] @relation("SentMessages")
+  receivedMessages  Message[] @relation("ReceivedMessages")
+}
+
+model Project {
+  id                          Int         @id @default(autoincrement())
+  title                       String
+  description                 String
+  budget                      Int
+  timeExpected                String?
+  skillsRequired              String[]
+  experienceReq               String
+  createdAt                   DateTime    @default(now())
+  client                      User        @relation("ClientProjects", fields: [clientId], references: [id])
+  clientId                    Int
+  applications                Application[]
+  assigned                    User?       @relation("AssignedApplicant", fields: [assignedId], references: [id])
+  assignedId                  Int?
+  messages                    Message[]
+  isFeatured                  Boolean     @default(false)
+  isCompleted                 Boolean     @default(false)
+  clientCompletionMessage     String?     @default("")
+  assignedCompletetionMessage String?     @default("")
+}
+
+model Application {
+  id                Int       @id @default(autoincrement())
+  coverLetter       String
+  createdAt         DateTime  @default(now())
+  project           Project   @relation(fields: [projectId], references: [id])
+  projectId         Int
+  applicant         User      @relation(fields: [applicantId], references: [id])
+  applicantId       Int
+  applicationStatus String    @default("pending")
+
+  @@unique([applicantId, projectId])
+}
+
+model Message {
+  id          Int      @id @default(autoincrement())
+  content     String
+  createdAt   DateTime @default(now())
+  sender      User     @relation("SentMessages", fields: [senderId], references: [id])
+  senderId    Int
+  receiver    User     @relation("ReceivedMessages", fields: [receiverId], references: [id])
+  receiverId  Int
+  project     Project  @relation(fields: [projectId], references: [id])
+  projectId   Int
+}
