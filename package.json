@@ -4,7 +4,7 @@
   "main": "index.js",
   "scripts": {
     "build": "tsc",
-    "start": "node dist/server.js",
+    "start": "prisma generate && npx tsc -b && cd dist && node server.js",
     "dev": "ts-node server.ts"
   },
   "keywords": [],
