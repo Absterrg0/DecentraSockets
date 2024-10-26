@@ -3,7 +3,7 @@ const app = express();
 const port = process.env.PORT || 3000;
 
 // Health check/keep-alive endpoint
-app.get('/keep-alive', (req, res) => {
+app.get('/', (req, res) => {
   res.send('WebSocket server is alive');
 });
 
