@@ -11,6 +11,14 @@ const app = express();
 const server = http.createServer(app);
 const wss = new WebSocket.Server({ server });
 
+// Middleware to parse JSON requests
+app.use(express.json());
+
+// Health check endpoint
+app.get('/', (req, res) => {
+  res.send('WebSocket server is running and healthy!');
+});
+
 interface MessageData {
   content: string;
   senderId: number;
@@ -24,16 +32,19 @@ wss.on('connection', (ws: WebSocket) => {
   ws.on('message', async (message: string) => {
     try {
       const data: MessageData = JSON.parse(message);
-    
-      // Save the message to the database
-      const savedMessage = await prisma.message.create({
-        data: {
-          content: data.content,
-          senderId: data.senderId,
-          receiverId: data.receiverId,
-          projectId: data.projectId,
-        },
+
+      // Send the message to the API to save it in the database
+      const response = await fetch(`${process.env.API_URL}/messages`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
       });
+
+      if (!response.ok) {
+        throw new Error('Failed to save message');
+      }
+
+      const savedMessage = await response.json();
 
       // Broadcast the message to all connected clients
       wss.clients.forEach((client) => {

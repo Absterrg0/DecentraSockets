@@ -13,20 +13,27 @@ const prisma = new client_1.PrismaClient();
 const app = (0, express_1.default)();
 const server = http_1.default.createServer(app);
 const wss = new ws_1.default.Server({ server });
+// Middleware to parse JSON requests
+app.use(express_1.default.json());
+// Health check endpoint
+app.get('/', (req, res) => {
+    res.send('WebSocket server is running and healthy!');
+});
 wss.on('connection', (ws) => {
     console.log('New client connected');
     ws.on('message', async (message) => {
         try {
             const data = JSON.parse(message);
-            // Save the message to the database
-            const savedMessage = await prisma.message.create({
-                data: {
-                    content: data.content,
-                    senderId: data.senderId,
-                    receiverId: data.receiverId,
-                    projectId: data.projectId,
-                },
+            // Send the message to the API to save it in the database
+            const response = await fetch(`${process.env.API_URL}/messages`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data),
             });
+            if (!response.ok) {
+                throw new Error('Failed to save message');
+            }
+            const savedMessage = await response.json();
             // Broadcast the message to all connected clients
             wss.clients.forEach((client) => {
                 if (client !== ws && client.readyState === ws_1.default.OPEN) {
