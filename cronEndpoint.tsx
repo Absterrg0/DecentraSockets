@@ -1,6 +1,6 @@
 const express = require('express');
 const app = express();
-const port = process.env.PORT || 3000;
+const port = 8080;
 
 // Health check/keep-alive endpoint
 app.get('/keep-alive', (req, res) => {
